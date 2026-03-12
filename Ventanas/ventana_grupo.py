@@ -1,5 +1,7 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
+from Grupo.agregar_grupo import agregar_grupo
 
 class VentanaGrupo:
     def __init__(self, root, comando_modificar=None, comando_buscar=None):
@@ -32,11 +34,11 @@ class VentanaGrupo:
         self.btn_limpiar = tk.Button(frame_superior, text="Limpiar", width=12, command=self.limpiar_campos)
         self.btn_limpiar.grid(row=1, column=2, padx=10)
 
-        self.btn_eliminar = tk.Button(frame_superior, text="Eliminar", width=12)
+        self.btn_eliminar = tk.Button(frame_superior, text="Eliminar", width=12,command=self.eliminar)
         self.btn_eliminar.grid(row=2, column=2, padx=10, pady=5)
 
         # Botón Agregar y Modificar (Abajo de los inputs)
-        self.btn_agregar = tk.Button(frame_superior, text="Agregar", width=12)
+        self.btn_agregar = tk.Button(frame_superior, text="Agregar", width=12,command=self.agregar)
         self.btn_agregar.grid(row=2, column=0, pady=10)
 
         # El botón modificar llama a la función local que enviará los datos
@@ -59,7 +61,7 @@ class VentanaGrupo:
         self.btn_backup = tk.Button(frame_global, text="Ejecutar Backup", width=50)
         self.btn_backup.pack(pady=2)
 
-        self.btn_eliminar_todos = tk.Button(frame_global, text="Eliminar todos los Grupos", width=50)
+        self.btn_eliminar_todos = tk.Button(frame_global, text="Eliminar todos los Grupos", width=50, command=self.eliminar_todos)
         self.btn_eliminar_todos.pack(pady=2)
 
         self.btn_restaurar_todos = tk.Button(frame_global, text="Restaurar todos los Grupos", width=50)
@@ -84,42 +86,50 @@ class VentanaGrupo:
         self.ent_clave.delete(0, tk.END)
         self.ent_nombre.delete(0, tk.END)
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = VentanaGrupo(root)
-    root.mainloop()
-from tkinter import messagebox
-from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
+    def eliminar(self):
+
+        clave = self.ent_clave.get()
+
+        if not clave:
+            messagebox.showwarning("Aviso", "Ingrese la clave del grupo")
+            return
+
+        eliminar_grupo(clave)
+
+        messagebox.showinfo(
+            "Eliminar",
+            "Grupo eliminado correctamente"
+        )
+
+    def eliminar_todos(self):
+
+        confirmar = messagebox.askyesno(
+            "Confirmación",
+            "¿Estás seguro de eliminar TODOS los grupos?"
+        )
+
+        if confirmar:
+
+            eliminar_todos_grupos()
+
+            messagebox.showinfo(
+                "Eliminar",
+                "Todos los grupos fueron eliminados"
+            )
+    def agregar(self):
+
+        clave = self.ent_clave.get()
+        nombre = self.ent_nombre.get()
+
+        if not clave or not nombre:
+            messagebox.showwarning("Aviso", "Ingrese la clave y el nombre del grupo")
+            return
+
+        agregar_grupo(clave, nombre)
+
+        messagebox.showinfo(
+            "Agregar",
+            "Grupo agregado correctamente"
+        )
 
 
-def eliminar():
-    clave = entry_clave.get()
-    eliminar_grupo(clave)
-    messagebox.showinfo("Eliminar", "Grupo eliminado correctamente")
-
-
-def eliminar_todos():
-    confirmar = messagebox.askyesno(
-        "Confirmación",
-        "¿Estás seguro de eliminar TODOS los grupos?"
-    )
-
-    if confirmar:
-        eliminar_todos_grupos()
-        messagebox.showinfo("Eliminar", "Todos los grupos fueron eliminados")
-
-
-ventana = tk.Tk()
-ventana.title("Eliminar Grupo")
-ventana.geometry("300x200")
-
-tk.Label(ventana, text="Clave del Grupo").pack()
-
-entry_clave = tk.Entry(ventana)
-entry_clave.pack()
-
-tk.Button(ventana, text="Eliminar grupo", command=eliminar).pack(pady=10)
-
-tk.Button(ventana, text="Eliminar TODOS", command=eliminar_todos).pack()
-
-ventana.mainloop()
