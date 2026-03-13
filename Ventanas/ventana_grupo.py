@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from utils.exportar import exportar_csv, exportar_json, exportar_xml
+from utils.importar import importar_csv, importar_json, importar_xml
 from Backup.backup import realizar_backup
 from Grupo.editar_grupo import actualizar_en_bd 
 from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
 from Grupo.agregar_grupo import agregar_grupo
+from Backup.restore import restaurar_backup
+
 
 class VentanaGrupo:
     def __init__(self, root, comando_modificar=None, comando_buscar=None):
@@ -37,11 +40,11 @@ class VentanaGrupo:
         self.btn_limpiar = tk.Button(frame_superior, text="Limpiar", width=12, command=self.limpiar_campos)
         self.btn_limpiar.grid(row=1, column=2, padx=10)
 
-        self.btn_eliminar = tk.Button(frame_superior, text="Eliminar", width=12,command=self.eliminar)
+        self.btn_eliminar = tk.Button(frame_superior, text="Eliminar", width=12,command=lambda: eliminar_grupo(self.ent_clave.get(), self))
         self.btn_eliminar.grid(row=2, column=2, padx=10, pady=5)
 
         # Botón Agregar y Modificar (Abajo de los inputs)
-        self.btn_agregar = tk.Button(frame_superior, text="Agregar", width=12,command=self.agregar)
+        self.btn_agregar = tk.Button(frame_superior, text="Agregar", width=12,command= lambda: agregar_grupo(self.ent_clave.get(), self.ent_nombre.get(), self))
         self.btn_agregar.grid(row=2, column=0, pady=10)
 
         # El botón modificar llama a la función local que enviará los datos
@@ -57,14 +60,20 @@ class VentanaGrupo:
             "json": exportar_json,
             "xml": exportar_xml
         }
+        funciones_importar = {
+    "csv": importar_csv,
+    "json": importar_json,
+    "xml": importar_xml
+        }
 
         formatos = ["csv", "json", "xml"]
         for i, fmt in enumerate(formatos):
 
             cmd_exportar = funciones_exportar.get(fmt)
+            cmd_importar = funciones_importar.get(fmt)
 
             tk.Button(frame_formatos, text=f"Exportar {fmt}", width=15, command=cmd_exportar).grid(row=0, column=i, padx=2, pady=2)
-            tk.Button(frame_formatos, text=f"Importar {fmt}", width=15).grid(row=1, column=i, padx=2, pady=2)
+            tk.Button(frame_formatos, text=f"Importar {fmt}", width=15,command=cmd_importar).grid(row=1, column=i, padx=2, pady=2)
 
         # --- SECCIÓN INFERIOR: ACCIONES GLOBALES ---
         frame_global = tk.Frame(self.root, padx=10, pady=20)
@@ -81,7 +90,7 @@ class VentanaGrupo:
         self.btn_eliminar_todos = tk.Button(frame_global, text="Eliminar todos los Grupos", width=50, command=self.eliminar_todos)
         self.btn_eliminar_todos.pack(pady=2)
 
-        self.btn_restaurar_todos = tk.Button(frame_global, text="Restaurar todos los Grupos", width=50)
+        self.btn_restaurar_todos = tk.Button(frame_global, text="Restaurar todos los Grupos", width=50,command=restaurar_backup)
         self.btn_restaurar_todos.pack(pady=2)
 
     # --- MÉTODOS DE SOPORTE PARA LA INTERFAZ ---
@@ -103,50 +112,11 @@ class VentanaGrupo:
         self.ent_clave.delete(0, tk.END)
         self.ent_nombre.delete(0, tk.END)
 
-    def eliminar(self):
-
-        clave = self.ent_clave.get()
-
-        if not clave:
-            messagebox.showwarning("Aviso", "Ingrese la clave del grupo")
-            return
-
-        eliminar_grupo(clave)
-
-        messagebox.showinfo(
-            "Eliminar",
-            "Grupo eliminado correctamente"
-        )
 
     def eliminar_todos(self):
-
         confirmar = messagebox.askyesno(
             "Confirmación",
             "¿Estás seguro de eliminar TODOS los grupos?"
         )
-
         if confirmar:
-
             eliminar_todos_grupos()
-
-            messagebox.showinfo(
-                "Eliminar",
-                "Todos los grupos fueron eliminados"
-            )
-    def agregar(self):
-
-        clave = self.ent_clave.get()
-        nombre = self.ent_nombre.get()
-
-        if not clave or not nombre:
-            messagebox.showwarning("Aviso", "Ingrese la clave y el nombre del grupo")
-            return
-
-        agregar_grupo(clave, nombre)
-
-        messagebox.showinfo(
-            "Agregar",
-            "Grupo agregado correctamente"
-        )
-
-

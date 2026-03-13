@@ -1,20 +1,24 @@
 from database.conexion import grupos
+from tkinter import messagebox
 
-def agregar_grupo(cveGru, nomGru):
+def agregar_grupo(cveGru, nomGru, ventana=None):
 
     # Validar campos vacíos
     if not cveGru or not nomGru:
-        return False, "Debe ingresar clave y nombre"
+        messagebox.showwarning("Advertencia", "Debe ingresar clave y nombre")
+        return False
 
     # Validar si ya existe la clave
     existe_clave = grupos.find_one({"cveGru": cveGru})
     if existe_clave:
-        return False, "Ya existe un grupo con esa clave"
+        messagebox.showwarning("Advertencia", "Ya existe un grupo con esa clave")
+        return False
 
     # Validar si ya existe el nombre
     existe_nombre = grupos.find_one({"nomGru": nomGru})
     if existe_nombre:
-        return False, "Ya existe un grupo con ese nombre"
+        messagebox.showwarning("Advertencia", "Ya existe un grupo con ese nombre")
+        return False
 
     # Insertar si todo está correcto
     grupos.insert_one({
@@ -22,4 +26,7 @@ def agregar_grupo(cveGru, nomGru):
         "nomGru": nomGru
     })
 
-    return True, "Grupo agregado correctamente"
+    messagebox.showinfo("Éxito", "Grupo agregado correctamente")
+    if ventana:
+        ventana.limpiar_campos()
+    return True
