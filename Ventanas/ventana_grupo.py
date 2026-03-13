@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from utils.exportar import exportar_csv, exportar_json, exportar_xml
+from Backup.backup import realizar_backup
 
 from Grupo.editar_grupo import actualizar_en_bd 
 from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
@@ -68,7 +69,12 @@ class VentanaGrupo:
         frame_global = tk.Frame(self.root, padx=10, pady=20)
         frame_global.pack(fill="x")
 
-        self.btn_backup = tk.Button(frame_global, text="Ejecutar Backup", width=50)
+        self.btn_backup = tk.Button(
+            frame_global, 
+            text="Ejecutar Backup", 
+            width=50, 
+            command=realizar_backup # <--- Conexión
+        )
         self.btn_backup.pack(pady=2)
 
         self.btn_eliminar_todos = tk.Button(frame_global, text="Eliminar todos los Grupos", width=50, command=self.eliminar_todos)
