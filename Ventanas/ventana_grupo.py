@@ -85,13 +85,27 @@ class VentanaGrupo:
             messagebox.showwarning("Error", "No se encontró el grupo")
 
     def click_modificar(self):
-        cve = self.ent_clave.get()
-        nom = self.ent_nombre.get()
+        cve = self.ent_clave.get().strip()
+        nom = self.ent_nombre.get().strip()
         
-        if actualizar_en_bd(cve, nom):
-            messagebox.showinfo("Éxito", "Grupo actualizado")
+        # Validación básica antes de enviar a la BD
+        if not cve or not nom:
+            messagebox.showwarning("Aviso", "La clave y el nombre no pueden estar vacíos")
+            return
+
+        # Intentar actualización
+        exito = actualizar_en_bd(cve, nom)
+        
+        if exito:
+            messagebox.showinfo("Éxito", f"Grupo '{cve}' actualizado correctamente")
         else:
-            messagebox.showerror("Error", "No se pudo actualizar (revisa si la clave existe)")
+            # Aquí el mensaje es más abierto porque ahora sabemos que puede fallar 
+            # por clave inexistente O por nombre duplicado.
+            messagebox.showerror("Error", 
+                "No se pudo realizar la actualización.\n\n"
+                "Causas posibles:\n"
+                "- La clave no existe.\n"
+                "- El nuevo nombre o clave ya está asignado a otro grupo.")
 
     def limpiar_campos(self):
         """Limpia los cuadros de texto"""
