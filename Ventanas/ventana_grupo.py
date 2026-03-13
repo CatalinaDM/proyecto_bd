@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from utils.exportar import exportar_csv, exportar_json, exportar_xml
+
 from Grupo.editar_grupo import actualizar_en_bd 
 from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
 from Grupo.agregar_grupo import agregar_grupo
@@ -48,9 +50,18 @@ class VentanaGrupo:
         frame_formatos = tk.Frame(self.root, padx=10)
         frame_formatos.pack(fill="x")
 
+        funciones_exportar = {
+            "csv": exportar_csv,
+            "json": exportar_json,
+            "xml": exportar_xml
+        }
+
         formatos = ["csv", "json", "xml"]
         for i, fmt in enumerate(formatos):
-            tk.Button(frame_formatos, text=f"Exportar {fmt}", width=15).grid(row=0, column=i, padx=2, pady=2)
+
+            cmd_exportar = funciones_exportar.get(fmt)
+
+            tk.Button(frame_formatos, text=f"Exportar {fmt}", width=15, command=cmd_exportar).grid(row=0, column=i, padx=2, pady=2)
             tk.Button(frame_formatos, text=f"Importar {fmt}", width=15).grid(row=1, column=i, padx=2, pady=2)
 
         # --- SECCIÓN INFERIOR: ACCIONES GLOBALES ---
