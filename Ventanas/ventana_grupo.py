@@ -1,14 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-
-from Grupo.editar_grupo import actualizar_en_bd 
 from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
 from Grupo.agregar_grupo import agregar_grupo
-from Grupo.buscar_grupo import buscar_en_bd
 
 class VentanaGrupo:
     def __init__(self, root, comando_modificar=None, comando_buscar=None):
         self.root = root
+        # Guardamos las referencias a las funciones que vienen de afuera
+        self.comando_modificar = comando_modificar
+        self.comando_buscar = comando_buscar
+        
         self.root.title("Admon Grupo")
         self.root.geometry("450x450")
         
@@ -68,44 +69,17 @@ class VentanaGrupo:
 
     # --- MÉTODOS DE SOPORTE PARA LA INTERFAZ ---
 
-    def click_buscar(self):
-        termino = self.ent_clave.get() or self.ent_nombre.get()
-        if not termino:
-            messagebox.showwarning("Aviso", "Ingresa clave o nombre para buscar")
-            return
-
-        res = buscar_en_bd(termino)
-        if res:
-            # Rellenar campos con lo encontrado
-            self.ent_clave.delete(0, tk.END)
-            self.ent_clave.insert(0, res.get("cveGru", ""))
-            self.ent_nombre.delete(0, tk.END)
-            self.ent_nombre.insert(0, res.get("nomGru", ""))
-        else:
-            messagebox.showwarning("Error", "No se encontró el grupo")
-
     def click_modificar(self):
-        cve = self.ent_clave.get().strip()
-        nom = self.ent_nombre.get().strip()
-        
-        # Validación básica antes de enviar a la BD
-        if not cve or not nom:
-            messagebox.showwarning("Aviso", "La clave y el nombre no pueden estar vacíos")
-            return
+        if self.comando_modificar:
+            clave = self.ent_clave.get()
+            nombre = self.ent_nombre.get()
+            self.comando_modificar(clave, nombre)
 
-        # Intentar actualización
-        exito = actualizar_en_bd(cve, nom)
-        
-        if exito:
-            messagebox.showinfo("Éxito", f"Grupo '{cve}' actualizado correctamente")
-        else:
-            # Aquí el mensaje es más abierto porque ahora sabemos que puede fallar 
-            # por clave inexistente O por nombre duplicado.
-            messagebox.showerror("Error", 
-                "No se pudo realizar la actualización.\n\n"
-                "Causas posibles:\n"
-                "- La clave no existe.\n"
-                "- El nuevo nombre o clave ya está asignado a otro grupo.")
+    def click_buscar(self):
+        """Manda la clave al comando de búsqueda externo si existe"""
+        if self.comando_buscar:
+            clave = self.ent_clave.get()
+            self.comando_buscar(clave, self) # Pasamos 'self' para que el buscador pueda escribir en los campos
 
     def limpiar_campos(self):
         """Limpia los cuadros de texto"""
