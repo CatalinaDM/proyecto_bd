@@ -1,41 +1,45 @@
-import json
+import subprocess
+import os
 from datetime import datetime
 from tkinter import filedialog, messagebox
-from database.conexion import grupos
+
+# Configuración de rutas (Ajusta la ruta a donde tengas instalado MongoDB Tools)
+RUTA_MONGODUMP = r"C:\Program Files\MongoDB\Tools\100\bin\mongodump.exe"
+NOMBRE_BD = "BD_Escuela1"
 
 def realizar_backup():
-    """Genera un archivo de respaldo de la colección grupos."""
+    """Genera un respaldo nativo .bson usando mongodump."""
     try:
-        # 1. Obtener todos los datos
-        datos = list(grupos.find())
-        
-        if not datos:
-            messagebox.showwarning("Backup", "La base de datos está vacía. No hay nada que respaldar.")
-            return
-
-        # 2. Preparar nombre de archivo por defecto (ej: backup_grupos_2024-05-20.json)
-        fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        nombre_sugerido = f"backup_grupos_{fecha_str}.json"
-
-        # 3. Pedir al usuario dónde guardarlo
-        ruta_archivo = filedialog.asksaveasfilename(
-            title="Seleccionar destino del Backup",
-            initialfile=nombre_sugerido,
-            defaultextension=".json",
-            filetypes=[("Archivo de Respaldo", "*.json")]
+        # 1. Pedir al usuario que seleccione una CARPETA de destino
+        # mongodump crea una estructura de carpetas, por lo que pedimos directorio
+        directorio_destino = filedialog.askdirectory(
+            title="Seleccionar carpeta para guardar el Backup nativo"
         )
 
-        if ruta_archivo:
-            # Convertir ObjectIds a string para que sea compatible con JSON
-            for doc in datos:
-                if "_id" in doc:
-                    doc["_id"] = str(doc["_id"])
+        if not directorio_destino:
+            return
 
-            # 4. Guardar los datos
-            with open(ruta_archivo, 'w', encoding='utf-8') as f:
-                json.dump(datos, f, indent=4, ensure_ascii=False)
-            
-            messagebox.showinfo("Éxito", f"Backup creado correctamente en:\n{ruta_archivo}")
-            
+        # 2. Preparar el nombre de la subcarpeta con la fecha
+        fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        ruta_final_backup = os.path.join(directorio_destino, f"backup_{NOMBRE_BD}_{fecha_str}")
+
+        # 3. Construir el comando para mongodump
+        # --db: nombre de la base de datos
+        # --out: carpeta de salida
+        comando = [
+            RUTA_MONGODUMP,
+            f"--db={NOMBRE_BD}",
+            f"--out={ruta_final_backup}"
+        ]
+
+        # 4. Ejecutar el comando
+        # check=True lanzará una excepción si el comando falla
+        # creationflags=subprocess.CREATE_NO_WINDOW evita que se abra una ventana negra de CMD
+        resultado = subprocess.run(comando, check=True, capture_output=True, text=True, creationflags=0x08000000)
+
+        messagebox.showinfo("Éxito", f"Backup nativo (.bson) creado correctamente en:\n{ruta_final_backup}")
+
+    except subprocess.CalledProcessError as e:
+        messagebox.showerror("Error de mongodump", f"No se pudo completar el respaldo nativo.\nVerifica que la ruta de las Tools sea correcta.\n\nError: {e.stderr}")
     except Exception as e:
-        messagebox.showerror("Error de Backup", f"No se pudo completar el respaldo: {e}")
+        messagebox.showerror("Error de Backup", f"Ocurrió un error inesperado: {e}")
