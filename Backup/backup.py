@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox
 
 # Configuración de rutas (Ajusta la ruta a donde tengas instalado MongoDB Tools)
 RUTA_MONGODUMP = r"C:\Program Files\MongoDB\Tools\100\bin\mongodump.exe"
-NOMBRE_BD = "BD_Escuela1"
+NOMBRE_BD = "BD_GrupoAlumno"
 
 def realizar_backup():
     """Genera un respaldo nativo .bson usando mongodump."""
