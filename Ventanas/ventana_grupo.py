@@ -94,7 +94,9 @@ class VentanaGrupo:
         self.btn_restaurar_todos.pack(pady=2)
 
     # --- MÉTODOS DE SOPORTE PARA LA INTERFAZ ---
+  
     # --- MÉTODOS ACTUALIZADOS ---
+    
     def click_buscar(self):
         # Ahora solo buscamos por clave, eliminamos el or self.ent_nombre.get()
         termino = self.ent_clave.get().strip()
@@ -109,13 +111,14 @@ class VentanaGrupo:
             self.ent_clave.config(state="normal")
             self.ent_clave.delete(0, tk.END)
             self.ent_clave.insert(0, res.get("cveGru", ""))
+
             # 2. BLOQUEMOS la clave: el usuario no puede editarla
             self.ent_clave.config(state="readonly")
             
             self.ent_nombre.delete(0, tk.END)
             self.ent_nombre.insert(0, res.get("nomGru", ""))
         else:
-           messagebox.showwarning("Error", "No se encontró ningún grupo con esa clave")
+            messagebox.showwarning("Error", "No se encontró ningún grupo con esa clave")
 
     def click_modificar(self):
         # Obtenemos la clave aunque esté en modo readonly
@@ -130,7 +133,9 @@ class VentanaGrupo:
         exito = actualizar_en_bd(cve, nom)
         
         if exito:
-             messagebox.showinfo("Éxito", f"El nombre del grupo '{cve}' ha sido actualizado")
+
+            messagebox.showinfo("Éxito", f"El nombre del grupo '{cve}' ha sido actualizado")
+
         else:
             # Mensajes más específicos
             messagebox.showerror("Error de actualización", 
