@@ -14,12 +14,6 @@ def agregar_grupo(cveGru, nomGru, ventana=None):
         messagebox.showwarning("Advertencia", "Ya existe un grupo con esa clave")
         return False
 
-    # Validar si ya existe el nombre
-    existe_nombre = grupos.find_one({"nomGru": nomGru})
-    if existe_nombre:
-        messagebox.showwarning("Advertencia", "Ya existe un grupo con ese nombre")
-        return False
-
     # Insertar si todo está correcto
     grupos.insert_one({
         "cveGru": cveGru,

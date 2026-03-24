@@ -1,107 +1,146 @@
-# Backup/restaurar_backup.py
-import json
+import subprocess
+import os
 from tkinter import filedialog, messagebox
 from database.conexion import grupos
-from bson import ObjectId
+
+def encontrar_mongorestore():
+    """Busca mongorestore en ubicaciones comunes"""
+    posibles_rutas = [
+        r"C:\Program Files\MongoDB\Tools\100\bin\mongorestore.exe",
+        r"C:\Program Files\MongoDB\Tools\110\bin\mongorestore.exe",
+        r"C:\Program Files\MongoDB\Tools\120\bin\mongorestore.exe",
+        r"C:\Program Files\MongoDB\Server\7.0\bin\mongorestore.exe",
+        r"C:\Program Files\MongoDB\Server\6.0\bin\mongorestore.exe",
+        r"C:\Program Files\MongoDB\Server\5.0\bin\mongorestore.exe",
+    ]
+    
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    try:
+        subprocess.run(["mongorestore", "--version"], capture_output=True)
+        return "mongorestore"
+    except:
+        return None
+
+def buscar_archivo_grupo(ruta_inicial):
+    """
+    Busca recursivamente el archivo Grupo.bson
+    """
+    print(f"🔍 Buscando Grupo.bson en: {ruta_inicial}")
+    
+    # Verificar archivos en carpeta actual
+    try:
+        archivos = os.listdir(ruta_inicial)
+        if 'Grupo.bson' in archivos:
+            ruta_completa = os.path.join(ruta_inicial, 'Grupo.bson')
+            print(f"Encontrado en: {ruta_completa}")
+            return ruta_completa
+    except:
+        pass
+    
+    # Buscar en subcarpetas
+    try:
+        for item in os.listdir(ruta_inicial):
+            ruta_completa = os.path.join(ruta_inicial, item)
+            if os.path.isdir(ruta_completa):
+                resultado = buscar_archivo_grupo(ruta_completa)
+                if resultado:
+                    return resultado
+    except:
+        pass
+    
+    return None
 
 def restaurar_backup():
-    """Restaura un archivo de backup a la colección grupos."""
+    """Restaura SOLO la colección Grupo desde su archivo .bson"""
     try:
-        # 1. Preguntar al usuario qué archivo quiere restaurar
-        ruta_archivo = filedialog.askopenfilename(
-            title="Seleccionar archivo de Backup para restaurar",
-            filetypes=[("Archivo de Respaldo", "*.json"), ("Todos los archivos", "*.*")]
+        # 1. Buscar mongorestore
+        mongorestore_path = encontrar_mongorestore()
+        if not mongorestore_path:
+            messagebox.showerror("Error", "No se encontró mongorestore.\nInstala MongoDB Tools")
+            return
+        
+        # 2. Seleccionar carpeta de backup (la que contiene todo)
+        ruta_backup = filedialog.askdirectory(
+            title="Seleccionar carpeta de backup (donde está Grupo.bson)"
         )
         
-        if not ruta_archivo:
-            messagebox.showwarning("Cancelado", "Operación cancelada por el usuario")
+        if not ruta_backup:
             return
-
-        # 2. Verificar si hay datos actuales en la BD
+        
+        # 3. Buscar el archivo Grupo.bson (recursivamente)
+        ruta_grupo_bson = buscar_archivo_grupo(ruta_backup)
+        
+        if not ruta_grupo_bson:
+            messagebox.showerror(
+                " Error",
+                f"No se encontró el archivo 'Grupo.bson' en:\n{ruta_backup}\n\n"
+                "Asegúrate de seleccionar la carpeta correcta."
+            )
+            return
+        
+        # 4. Verificar datos actuales de Grupo
         grupos_actuales = grupos.count_documents({})
         
+        usar_drop = False
         if grupos_actuales > 0:
-            respuesta = messagebox.askyesnocancel(
+            respuesta = messagebox.askyesno(
                 "Datos existentes",
                 f"Actualmente hay {grupos_actuales} grupos en la base de datos.\n\n"
-                "¿Qué desea hacer?\n\n"
-                "Sí: Reemplazar todos los datos actuales\n"
-                "No: agregar solo los nuevos\n"
-                "Cancelar: No hacer nada"
+                "¿Deseas ELIMINAR los datos actuales antes de restaurar?\n"
+                "• Sí: Eliminar datos existentes (--drop)\n"
+                "• No: Hacer merge con los datos actuales"
+            )
+            usar_drop = respuesta
+        
+        # 5. Construir comando - restaurar desde archivo .bson
+        comando = [
+            mongorestore_path,
+            "--db=BD_GrupoAlumno",
+            "--collection=Grupo",
+            ruta_grupo_bson  # Ruta directa al archivo .bson
+        ]
+        
+        if usar_drop:
+            comando.append("--drop")
+            mensaje_accion = "reemplazando"
+        else:
+            mensaje_accion = "fusionando con"
+        
+        # 6. Ejecutar
+        print(f"Ejecutando: {' '.join(comando)}")
+        
+        resultado = subprocess.run(
+            comando,
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        
+        # 7. Verificar resultado
+        if resultado.returncode == 0:
+            # Extraer cuántos documentos se restauraron
+            grupos_restaurados = 0
+            for linea in resultado.stdout.split('\n'):
+                if "document(s) restored" in linea.lower():
+                    import re
+                    match = re.search(r'(\d+)\s+document', linea)
+                    if match:
+                        grupos_restaurados = match.group(1)
+                        break
+            
+            messagebox.showinfo(
+                " Restauración exitosa",
+                f"Colección 'Grupo' restaurada correctamente.\n\n"
+                f" Grupos {mensaje_accion}: {grupos_restaurados}\n"
+            )
+        else:
+            messagebox.showerror(
+                "Error",
+                f"Error al ejecutar mongorestore:\n\n{resultado.stderr}"
             )
             
-            if respuesta is None:  # Cancelar
-                messagebox.showwarning("Cancelado", "Operación cancelada")
-                return
-            elif respuesta:  # Sí - Reemplazar
-                modo = "reemplazar"
-            else:  # No - Merge
-                modo = "merge"
-        else:
-            modo = "insertar"
-
-        # 3. Leer el archivo de backup
-        with open(ruta_archivo, 'r', encoding='utf-8') as f:
-            datos_backup = json.load(f)
-
-        if not datos_backup:
-            messagebox.showwarning("Aviso", "El archivo de backup está vacío")
-            return
-
-        # 4. Restaurar según el modo elegido
-        if modo == "reemplazar":
-            grupos.delete_many({})
-            
-            for doc in datos_backup:
-                if "_id" in doc:
-                    doc["_id"] = ObjectId(doc["_id"])
-                grupos.insert_one(doc)
-            
-            messagebox.showinfo("Éxito", f" Restauración completada: Se reemplazaron {len(datos_backup)} grupos")
-            
-        elif modo == "merge":
-            insertados = 0
-            actualizados = 0
-            saltados = 0
-            
-            for doc in datos_backup:
-                existe = grupos.find_one({"cveGru": doc["cveGru"]})
-                
-                if existe:
-                    respuesta_dup = messagebox.askyesno(
-                        "Registro duplicado",
-                        f"El grupo '{doc['cveGru']} - {doc['nomGru']}' ya existe.\n"
-                        "¿Desea actualizarlo con los datos del backup?"
-                    )
-                    if respuesta_dup:
-                        grupos.update_one(
-                            {"cveGru": doc["cveGru"]},
-                            {"$set": {"nomGru": doc["nomGru"]}}
-                        )
-                        actualizados += 1
-                    else:
-                        saltados += 1
-                else:
-                    if "_id" in doc:
-                        doc["_id"] = ObjectId(doc["_id"])
-                    grupos.insert_one(doc)
-                    insertados += 1
-            
-            mensaje = f"Resumen de restauración:\n"
-            mensaje += f"   - Insertados: {insertados}\n"
-            mensaje += f"   - Actualizados: {actualizados}\n"
-            mensaje += f"   - Saltados: {saltados}"
-            messagebox.showinfo("Resultado", mensaje)
-            
-        else:  # Insertar (BD vacía)
-            for doc in datos_backup:
-                if "_id" in doc:
-                    doc["_id"] = ObjectId(doc["_id"])
-                grupos.insert_one(doc)
-            
-            messagebox.showinfo("Éxito", f" Restauración completada: Se insertaron {len(datos_backup)} grupos")
-
-    except json.JSONDecodeError:
-        messagebox.showerror("Error", "El archivo no tiene un formato JSON válido")
     except Exception as e:
-        messagebox.showerror("Error",f" Error durante la restauración: {str(e)}")
+        messagebox.showerror("Error", f"Error inesperado: {str(e)}")

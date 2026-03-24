@@ -94,51 +94,54 @@ class VentanaGrupo:
         self.btn_restaurar_todos.pack(pady=2)
 
     # --- MÉTODOS DE SOPORTE PARA LA INTERFAZ ---
-
+    # --- MÉTODOS ACTUALIZADOS ---
     def click_buscar(self):
-        termino = self.ent_clave.get() or self.ent_nombre.get()
+        # Ahora solo buscamos por clave, eliminamos el or self.ent_nombre.get()
+        termino = self.ent_clave.get().strip()
+        
         if not termino:
-            messagebox.showwarning("Aviso", "Ingresa clave o nombre para buscar")
+            messagebox.showwarning("Aviso", "Ingresa la clave del grupo para buscar")
             return
 
         res = buscar_en_bd(termino)
         if res:
-            # Rellenar campos con lo encontrado
+            # 1. Habilitamos temporalmente para rellenar
+            self.ent_clave.config(state="normal")
             self.ent_clave.delete(0, tk.END)
             self.ent_clave.insert(0, res.get("cveGru", ""))
+            # 2. BLOQUEMOS la clave: el usuario no puede editarla
+            self.ent_clave.config(state="readonly")
+            
             self.ent_nombre.delete(0, tk.END)
             self.ent_nombre.insert(0, res.get("nomGru", ""))
         else:
-            messagebox.showwarning("Error", "No se encontró el grupo")
+           messagebox.showwarning("Error", "No se encontró ningún grupo con esa clave")
 
     def click_modificar(self):
+        # Obtenemos la clave aunque esté en modo readonly
         cve = self.ent_clave.get().strip()
         nom = self.ent_nombre.get().strip()
         
-        # Validación básica antes de enviar a la BD
         if not cve or not nom:
-            messagebox.showwarning("Aviso", "La clave y el nombre no pueden estar vacíos")
+            messagebox.showwarning("Aviso", "No hay datos seleccionados para modificar")
             return
 
-        # Intentar actualización
+        # Intentar actualización en la base de datos
         exito = actualizar_en_bd(cve, nom)
         
         if exito:
-            messagebox.showinfo("Éxito", f"Grupo '{cve}' actualizado correctamente")
+             messagebox.showinfo("Éxito", f"El nombre del grupo '{cve}' ha sido actualizado")
         else:
-            # Aquí el mensaje es más abierto porque ahora sabemos que puede fallar 
-            # por clave inexistente O por nombre duplicado.
-            messagebox.showerror("Error", 
-                "No se pudo realizar la actualización.\n\n"
-                "Causas posibles:\n"
-                "- La clave no existe.\n"
-                "- El nuevo nombre o clave ya está asignado a otro grupo.")
+            # Mensajes más específicos
+            messagebox.showerror("Error de actualización", 
+                "No se pudo cambiar el nombre.\n\n"
+                "Verifica que el nuevo nombre no esté siendo usado por otro grupo.")
 
     def limpiar_campos(self):
-        """Limpia los cuadros de texto"""
+        """Limpia los cuadros de texto y desbloquea la clave"""
+        self.ent_clave.config(state="normal") # Importante: volver a normal para poder escribir
         self.ent_clave.delete(0, tk.END)
         self.ent_nombre.delete(0, tk.END)
-
 
     def eliminar_todos(self):
         confirmar = messagebox.askyesno(
