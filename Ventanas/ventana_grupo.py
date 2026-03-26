@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+
 from utils.exportar import exportar_csv, exportar_json, exportar_xml
 from utils.importar import importar_csv, importar_json, importar_xml
 
@@ -12,146 +13,153 @@ from Grupo.agregar_grupo import agregar_grupo
 from Grupo.buscar_grupo import buscar_en_bd
 
 
-
 class VentanaGrupo:
-    def __init__(self, root, comando_modificar=None, comando_buscar=None):
+
+    def __init__(self, root):
         self.root = root
-        self.root.title("Admon Grupo")
-        self.root.geometry("450x450")
-        
-        # --- SECCIÓN SUPERIOR: INPUTS Y BOTONES CRUD ---
-        frame_superior = tk.Frame(self.root, padx=10, pady=10)
-        frame_superior.pack(fill="x")
+        self.root.title("Administración de Grupos")
+        self.root.geometry("420x500")
+        self.root.configure(bg="#F8F1F1")
 
-        # Labels e Inputs (Izquierda)
-        tk.Label(frame_superior, text="Clave:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
-        self.ent_clave = tk.Entry(frame_superior, width=25)
-        self.ent_clave.grid(row=0, column=1, padx=5, pady=5)
+        # ====== ESTILOS ======
+        style = ttk.Style()
+        style.theme_use("clam")
 
-        tk.Label(frame_superior, text="Nombre:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
-        self.ent_nombre = tk.Entry(frame_superior, width=25)
-        self.ent_nombre.grid(row=1, column=1, padx=5, pady=5)
+        style.configure("Card.TFrame", background="#F8F1F1")
+        style.configure("TLabel", background="#F8F1F1", font=("Segoe UI", 10))
+        style.configure("Header.TLabel", background="#F8F1F1", foreground="white",
+                        font=("Segoe UI", 16, "bold"))
 
-        # Botones CRUD (Derecha)
-        # El botón buscar llama a la función local que luego llama al controlador
-        self.btn_buscar = tk.Button(frame_superior, text="Buscar", width=12, command=self.click_buscar)
-        self.btn_buscar.grid(row=0, column=2, padx=10)
+        style.configure("Primary.TButton", background="#16C79A", foreground="white")
+        style.map("Primary.TButton", background=[("active", "#13a37f")])
 
-        self.btn_limpiar = tk.Button(frame_superior, text="Limpiar", width=12, command=self.limpiar_campos)
-        self.btn_limpiar.grid(row=1, column=2, padx=10)
+        style.configure("Secondary.TButton", background="#11698E", foreground="white")
+        style.map("Secondary.TButton", background=[("active", "#0e5675")])
 
-        self.btn_eliminar = tk.Button(frame_superior, text="Eliminar", width=12,command=lambda: eliminar_grupo(self.ent_clave.get(), self))
-        self.btn_eliminar.grid(row=2, column=2, padx=10, pady=5)
+        # ====== HEADER ======
+        tk.Label(self.root, text="Gestión de Grupos",
+                 bg="#F8F1F1", fg="#19456B",
+                 font=("Segoe UI", 18, "bold")).pack(pady=15)
 
-        # Botón Agregar y Modificar (Abajo de los inputs)
-        self.btn_agregar = tk.Button(frame_superior, text="Agregar", width=12,command= lambda: agregar_grupo(self.ent_clave.get(), self.ent_nombre.get(), self))
-        self.btn_agregar.grid(row=2, column=0, pady=10)
+        # ====== CONTENEDOR ======
+        container = tk.Frame(self.root, bg="#F8F1F1")
+        container.pack(fill="both", expand=True, padx=15)
 
-        # El botón modificar llama a la función local que enviará los datos
-        self.btn_modificar = tk.Button(frame_superior, text="Modificar", width=12, command=self.click_modificar)
-        self.btn_modificar.grid(row=2, column=1, pady=10)
+        # ====== TARJETA DATOS ======
+        card_datos = tk.Frame(container, bg="#F8F1F1", bd=0, relief="flat")
+        card_datos.pack(fill="x", pady=10)
 
-        # --- SECCIÓN MEDIA: EXPORTAR / IMPORTAR ---
-        frame_formatos = tk.Frame(self.root, padx=10)
-        frame_formatos.pack(fill="x")
+        tk.Label(card_datos, text="Clave:", bg="#F8F1F1").grid(row=0, column=0, padx=10, pady=10)
+        self.ent_clave = tk.Entry(card_datos, width=30, relief="flat", bg="white")
+        self.ent_clave.grid(row=0, column=1, padx=10, pady=10)
 
-        funciones_exportar = {
-            "csv": exportar_csv,
-            "json": exportar_json,
-            "xml": exportar_xml
-        }
-        funciones_importar = {
-    "csv": importar_csv,
-    "json": importar_json,
-    "xml": importar_xml
-        }
+        tk.Label(card_datos, text="Nombre:", bg="#F8F1F1").grid(row=1, column=0, padx=10, pady=10)
+        self.ent_nombre = tk.Entry(card_datos, width=30, relief="flat", bg="white")
+        self.ent_nombre.grid(row=1, column=1, padx=10, pady=10)
+
+        # BOTONES LATERALES
+        side_btns = tk.Frame(card_datos, bg="#F8F1F1")
+        side_btns.grid(row=0, column=2, rowspan=2, padx=10)
+
+        tk.Button(side_btns, text="Buscar", bg="#11698E", fg="white",
+                  relief="flat", width=12, command=self.click_buscar).pack(pady=3)
+
+        tk.Button(side_btns, text="Limpiar", bg="#11698E", fg="white",
+                  relief="flat", width=12, command=self.limpiar_campos).pack(pady=3)
+
+        tk.Button(side_btns, text="Eliminar", bg="#c0392b", fg="white",
+                  relief="flat", width=12,
+                  command=lambda: eliminar_grupo(self.ent_clave.get(), self)).pack(pady=3)
+
+        # ====== ACCIONES ======
+        acciones = tk.Frame(container, bg="#F8F1F1")
+        acciones.pack(fill="x", pady=10)
+
+        tk.Button(acciones, text="Agregar",
+                  bg="#16C79A", fg="white", relief="flat",
+                  width=20,
+                  command=lambda: agregar_grupo(self.ent_clave.get(), self.ent_nombre.get(), self)
+                  ).pack(side="left", padx=5)
+
+        tk.Button(acciones, text="Modificar",
+                  bg="#11698E", fg="white", relief="flat",
+                  width=20,
+                  command=self.click_modificar
+                  ).pack(side="left", padx=5)
+
+        # ====== IMPORTAR / EXPORTAR ======
+        card_formatos = tk.Frame(container, bg="#F8F1F1")
+        card_formatos.pack(fill="x", pady=10)
 
         formatos = ["csv", "json", "xml"]
+        funciones_exportar = {"csv": exportar_csv, "json": exportar_json, "xml": exportar_xml}
+        funciones_importar = {"csv": importar_csv, "json": importar_json, "xml": importar_xml}
+
         for i, fmt in enumerate(formatos):
+            tk.Button(card_formatos, text=f"Exportar {fmt.upper()}",
+                      bg="#11698E", fg="white", relief="flat",
+                      width=15, command=funciones_exportar[fmt]).grid(row=0, column=i, padx=5, pady=5)
 
-            cmd_exportar = funciones_exportar.get(fmt)
-            cmd_importar = funciones_importar.get(fmt)
+            tk.Button(card_formatos, text=f"Importar {fmt.upper()}",
+                      bg="#16C79A", fg="white", relief="flat",
+                      width=15, command=funciones_importar[fmt]).grid(row=1, column=i, padx=5, pady=5)
 
-            tk.Button(frame_formatos, text=f"Exportar {fmt}", width=15, command=cmd_exportar).grid(row=0, column=i, padx=2, pady=2)
-            tk.Button(frame_formatos, text=f"Importar {fmt}", width=15,command=cmd_importar).grid(row=1, column=i, padx=2, pady=2)
+        # ====== GLOBALES ======
+        card_global = tk.Frame(container, bg="#F8F1F1")
+        card_global.pack(fill="x", pady=10)
 
-        # --- SECCIÓN INFERIOR: ACCIONES GLOBALES ---
-        frame_global = tk.Frame(self.root, padx=10, pady=20)
-        frame_global.pack(fill="x")
+        tk.Button(card_global, text="Ejecutar Backup",
+                  bg="#11698E", fg="white", relief="flat",
+                  width=50, command=realizar_backup).pack(pady=4)
 
-        self.btn_backup = tk.Button(
-            frame_global, 
-            text="Ejecutar Backup", 
-            width=50, 
-            command=realizar_backup # <--- Conexión
-        )
-        self.btn_backup.pack(pady=2)
+        tk.Button(card_global, text="Eliminar todos los grupos",
+                  bg="#c0392b", fg="white", relief="flat",
+                  width=50, command=self.eliminar_todos).pack(pady=4)
 
-        self.btn_eliminar_todos = tk.Button(frame_global, text="Eliminar todos los Grupos", width=50, command=self.eliminar_todos)
-        self.btn_eliminar_todos.pack(pady=2)
+        tk.Button(card_global, text="Restaurar grupos",
+                  bg="#16C79A", fg="white", relief="flat",
+                  width=50, command=restaurar_backup).pack(pady=4)
 
-        self.btn_restaurar_todos = tk.Button(frame_global, text="Restaurar todos los Grupos", width=50,command=restaurar_backup)
-        self.btn_restaurar_todos.pack(pady=2)
+    # ====== LÓGICA (IGUAL) ======
 
-    # --- MÉTODOS DE SOPORTE PARA LA INTERFAZ ---
-  
-    # --- MÉTODOS ACTUALIZADOS ---
-    
     def click_buscar(self):
-        # Ahora solo buscamos por clave, eliminamos el or self.ent_nombre.get()
         termino = self.ent_clave.get().strip()
-        
+
         if not termino:
-            messagebox.showwarning("Aviso", "Ingresa la clave del grupo para buscar")
+            messagebox.showwarning("Aviso", "Ingresa la clave del grupo")
             return
 
         res = buscar_en_bd(termino)
+
         if res:
-            # 1. Habilitamos temporalmente para rellenar
             self.ent_clave.config(state="normal")
             self.ent_clave.delete(0, tk.END)
             self.ent_clave.insert(0, res.get("cveGru", ""))
-
-            # 2. BLOQUEMOS la clave: el usuario no puede editarla
             self.ent_clave.config(state="readonly")
-            
+
             self.ent_nombre.delete(0, tk.END)
             self.ent_nombre.insert(0, res.get("nomGru", ""))
         else:
-            messagebox.showwarning("Error", "No se encontró ningún grupo con esa clave")
+            messagebox.showwarning("Error", "No encontrado")
 
     def click_modificar(self):
-        # Obtenemos la clave aunque esté en modo readonly
         cve = self.ent_clave.get().strip()
         nom = self.ent_nombre.get().strip()
-        
+
         if not cve or not nom:
-            messagebox.showwarning("Aviso", "No hay datos seleccionados para modificar")
+            messagebox.showwarning("Aviso", "Datos incompletos")
             return
 
-        # Intentar actualización en la base de datos
-        exito = actualizar_en_bd(cve, nom)
-        
-        if exito:
-
-            messagebox.showinfo("Éxito", f"El nombre del grupo '{cve}' ha sido actualizado")
-
+        if actualizar_en_bd(cve, nom):
+            messagebox.showinfo("Éxito", "Actualizado correctamente")
         else:
-            # Mensajes más específicos
-            messagebox.showerror("Error de actualización", 
-                "No se pudo cambiar el nombre.\n\n"
-                "Verifica que el nuevo nombre no esté siendo usado por otro grupo.")
+            messagebox.showerror("Error", "No se pudo actualizar")
 
     def limpiar_campos(self):
-        """Limpia los cuadros de texto y desbloquea la clave"""
-        self.ent_clave.config(state="normal") # Importante: volver a normal para poder escribir
+        self.ent_clave.config(state="normal")
         self.ent_clave.delete(0, tk.END)
         self.ent_nombre.delete(0, tk.END)
 
     def eliminar_todos(self):
-        confirmar = messagebox.askyesno(
-            "Confirmación",
-            "¿Estás seguro de eliminar TODOS los grupos?"
-        )
-        if confirmar:
+        if messagebox.askyesno("Confirmación", "¿Eliminar todos los grupos?"):
             eliminar_todos_grupos()
