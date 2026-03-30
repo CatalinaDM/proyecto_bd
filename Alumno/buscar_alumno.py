@@ -1,19 +1,10 @@
-from database.conexion import alumnos
+from database.conexion import db 
 
-def buscar_en_bd(termino):
-    """
-    Busca un alumno por su clave (cveAlu) exacta.
-    Retorna el documento del alumno o None si no se encuentra.
-    """
+def buscar_alumno_bd(termino):
+    """Busca únicamente por cveAlu exacta en la colección Alumno"""
     try:
-        # Limpiamos espacios en blanco y aseguramos que sea string
         filtro = {"cveAlu": str(termino).strip()}
-        
-        # Realizamos la búsqueda en la colección de alumnos
-        alumno = alumnos.find_one(filtro)
-        
-        return alumno
-        
+        return db.Alumno.find_one(filtro)
     except Exception as e:
         print(f"Error al buscar alumno: {e}")
         return None

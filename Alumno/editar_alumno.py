@@ -1,16 +1,22 @@
-from database.conexion import alumnos, grupos
+from database.conexion import db
 
-def actualizar_en_bd(cveAlu, nuevo_nombre, nueva_cveGru):
+def actualizar_alumno_bd(cve, nuevo_nombre):
+    """
+    Actualiza únicamente el nombre del alumno.
+    La clave (cveAlu) se usa como identificador único y no se puede modificar.
+    Permite nombres duplicados en la base de datos.
+    """
     try:
-        # Validar que el nuevo grupo exista si se cambió
-        if not grupos.find_one({"cveGru": nueva_cveGru}):
-            print("Error: El grupo destino no existe")
-            return False
+        cve_clean = str(cve).strip()
+        nombre_clean = str(nuevo_nombre).strip()
 
-        resultado = alumnos.update_one(
-            {"cveAlu": cveAlu},
-            {"$set": {"nomAlu": nuevo_nombre, "cveGru": nueva_cveGru}}
+        resultado = db.Alumno.update_one(
+            {"cveAlu": cve_clean},
+            {"$set": {"nomAlu": nombre_clean}}
         )
-        return resultado.modified_count > 0
+        
+        return resultado.matched_count > 0
+
     except Exception as e:
+        print(f"Error al actualizar alumno: {e}")
         return False
