@@ -28,7 +28,7 @@ def buscar_archivo_grupo(ruta_inicial):
     """
     Busca recursivamente el archivo Grupo.bson
     """
-    print(f"🔍 Buscando Grupo.bson en: {ruta_inicial}")
+    print(f" Buscando Grupo.bson en: {ruta_inicial}")
     
     # Verificar archivos en carpeta actual
     try:
@@ -144,3 +144,102 @@ def restaurar_backup():
             
     except Exception as e:
         messagebox.showerror("Error", f"Error inesperado: {str(e)}")
+
+
+
+def restaurar_bd_completa():
+    """Restaura la base de datos completa usando mongorestore"""
+    
+    # 1. Buscar mongorestore
+    mongorestore_path = encontrar_mongorestore()
+    if not mongorestore_path:
+        messagebox.showerror("Error", "No se encontró mongorestore.\nInstala MongoDB Tools")
+        return False
+    
+    # 2. Seleccionar carpeta de backup (la que contiene todo)
+    ruta_backup = filedialog.askdirectory(
+        title="Seleccionar carpeta de backup"
+    )
+    
+    # Si el usuario cancela la selección
+    if not ruta_backup:
+        messagebox.showwarning("Cancelado", "No se seleccionó ninguna carpeta")
+        return False
+    
+    # Validación 1: Verificar que la ruta existe
+    if not os.path.exists(ruta_backup):
+        messagebox.showerror("Error", f"La ruta '{ruta_backup}' no existe")
+        return False
+    
+    # Validación 2: Verificar que la ruta tiene archivos .bson
+    try:
+        archivos_bson = [f for f in os.listdir(ruta_backup) if f.endswith('.bson')]
+        if not archivos_bson:
+            messagebox.showerror("Error", f"No se encontraron archivos .bson en '{ruta_backup}'")
+            return False
+    except PermissionError:
+        messagebox.showerror("Error", f"No se tienen permisos para leer '{ruta_backup}'")
+        return False
+    
+    # Preguntar confirmación
+    confirmar = messagebox.askyesno(
+        "Confirmar Restore", 
+        f"¿Restaurar BD 'BD_GrupoAlumno' completa?\n\n"
+        f"Si la base de datos actualemente contiene datos se eliminaran\n"
+        f"Collections encontradas: {len(archivos_bson)}\n\n"
+        f"¿Continuar?"
+    )
+    
+    if not confirmar:
+        messagebox.showinfo("Cancelado", "Restore cancelado por el usuario")
+        return False
+    
+    # Ejecutar mongorestore
+    try:
+        # Comando correctamente formado
+        comando = [
+            mongorestore_path,
+            "--drop",
+            "--db", "BD_GrupoAlumno",
+            ruta_backup
+        ]
+        
+        # Ejecutar sin shell=True cuando usas lista
+        resultado = subprocess.run(
+            comando, 
+            capture_output=True, 
+            text=True,
+            encoding='utf-8'
+        )
+        
+        if resultado.returncode == 0:
+            messagebox.showinfo(
+                "Éxito", 
+                f"Restore completado exitosamente para 'BD_GrupoAlumno'\n\n"
+                f"Collections restauradas: {len(archivos_bson)}\n"
+            )
+            print(f"Resultado: {resultado.stdout}")
+            return True
+        else:
+            messagebox.showerror(
+                "Error en Restore",
+                f"Código de error: {resultado.returncode}\n\n"
+                f"Mensaje:\n{resultado.stderr}"
+            )
+            print(f"ERROR: {resultado.stderr}")
+            return False
+        
+    except subprocess.SubprocessError as e:
+        messagebox.showerror(
+            "Error", 
+            f"Error al ejecutar mongorestore:\n{str(e)}"
+        )
+        print(f"Error: {e}")
+        return False
+    except Exception as e:
+        messagebox.showerror(
+            "Error Inesperado",
+            f"Ocurrió un error inesperado:\n{str(e)}"
+        )
+        print(f"Error inesperado: {e}")
+        return False
