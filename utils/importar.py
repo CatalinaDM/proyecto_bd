@@ -14,7 +14,7 @@ def encontrar_mongoimport():
         r"C:\Program Files\MongoDB\Tools\120\bin\mongoimport.exe",
         r"C:\Program Files\MongoDB\Server\7.0\bin\mongoimport.exe",
         r"C:\Program Files\MongoDB\Server\6.0\bin\mongoimport.exe",
-        r"C:\Program Files\MongoDB\Server\5.0\bin\mongoimport.exe",
+        r"C:\Program Files\MongoDB\Server\5.0\bin\mongoimport.exe"
     ]
     
     for ruta in posibles_rutas:
