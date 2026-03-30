@@ -1,21 +1,26 @@
-from database.conexion import alumnos, grupos
+from database.conexion import alumnos
 from tkinter import messagebox
 
-def agregar_alumno(cveAlu, nomAlu, cveGru, ventana=None):
-    if not cveAlu or not nomAlu or not cveGru:
-        messagebox.showwarning("Aviso", "Todos los campos son obligatorios")
+def agregar_alumno(cveAlu, nomAlu, ventana=None):
+
+    # Validar campos vacíos
+    if not cveAlu or not nomAlu:
+        messagebox.showwarning("Advertencia", "Debe ingresar clave y nombre")
         return False
 
-    # Validar que el grupo exista
-    if not grupos.find_one({"cveGru": cveGru}):
-        messagebox.showerror("Error", f"El grupo '{cveGru}' no existe.")
+    # Validar si ya existe la clave
+    existe_clave = alumnos.find_one({"cveAlu": cveAlu})
+    if existe_clave:
+        messagebox.showwarning("Advertencia", "Ya existe un alumno con esa clave")
         return False
 
-    if alumnos.find_one({"cveAlu": cveAlu}):
-        messagebox.showwarning("Aviso", "La clave del alumno ya existe")
-        return False
+    # Insertar si todo está correcto
+    alumnos.insert_one({
+        "cveAlu": cveAlu,
+        "nomAlu": nomAlu
+    })
 
-    alumnos.insert_one({"cveAlu": cveAlu, "nomAlu": nomAlu, "cveGru": cveGru})
-    messagebox.showinfo("Éxito", "Alumno registrado")
-    if ventana: ventana.limpiar_campos()
+    messagebox.showinfo("Éxito", "Alumno agregado correctamente")
+    if ventana:
+        ventana.limpiar_campos()
     return True

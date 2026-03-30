@@ -7,10 +7,10 @@ from utils.importar_alumno import importar_csv_alumno, importar_json_alumno, imp
 from Backup.backup import realizar_backup
 from Backup.restore import restaurar_backup
 
-from Grupo.editar_grupo import actualizar_en_bd 
-from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
-from Grupo.agregar_grupo import agregar_grupo
-from Grupo.buscar_grupo import buscar_en_bd
+from Alumno.editar_alumno import actualizar_alumno_bd
+from Alumno.eliminar_alumno import eliminar_alumno, eliminar_todos_alumnos
+from Alumno.agregar_alumno import agregar_alumno
+from Alumno.buscar_alumno import buscar_alumno_bd
 
 
 class VentanaAlumno:
@@ -37,7 +37,7 @@ class VentanaAlumno:
         style.map("Secondary.TButton", background=[("active", "#0e5675")])
 
         # ====== HEADER ======
-        tk.Label(self.root, text="Gestión de Grupos",
+        tk.Label(self.root, text="Gestión de Alumnos",
                  bg="#F8F1F1", fg="#19456B",
                  font=("Segoe UI", 18, "bold")).pack(pady=15)
 
@@ -69,7 +69,7 @@ class VentanaAlumno:
 
         tk.Button(side_btns, text="Eliminar", bg="#c0392b", fg="white",
                   relief="flat", width=12,
-                  command=lambda: eliminar_grupo(self.ent_clave.get(), self)).pack(pady=3)
+                  command=lambda: eliminar_alumno(self.ent_clave.get(), self)).pack(pady=3)
 
         # ====== ACCIONES ======
         acciones = tk.Frame(container, bg="#F8F1F1")
@@ -78,7 +78,7 @@ class VentanaAlumno:
         tk.Button(acciones, text="Agregar",
                   bg="#16C79A", fg="white", relief="flat",
                   width=20,
-                  command=lambda: agregar_grupo(self.ent_clave.get(), self.ent_nombre.get(), self)
+                  command=lambda: agregar_alumno(self.ent_clave.get(), self.ent_nombre.get(), self)
                   ).pack(side="left", padx=5)
 
         tk.Button(acciones, text="Modificar",
@@ -112,11 +112,11 @@ class VentanaAlumno:
                   bg="#11698E", fg="white", relief="flat",
                   width=50, command=realizar_backup).pack(pady=4)
 
-        tk.Button(card_global, text="Eliminar todos los grupos",
+        tk.Button(card_global, text="Eliminar todos los alumnos",
                   bg="#c0392b", fg="white", relief="flat",
-                  width=50, command=self.eliminar_todos).pack(pady=4)
+                  width=50, command=self.eliminar_todos_alumnos).pack(pady=4)
 
-        tk.Button(card_global, text="Restaurar grupos",
+        tk.Button(card_global, text="Restaurar alumnos",
                   bg="#16C79A", fg="white", relief="flat",
                   width=50, command=restaurar_backup).pack(pady=4)
 
@@ -126,19 +126,19 @@ class VentanaAlumno:
         termino = self.ent_clave.get().strip()
 
         if not termino:
-            messagebox.showwarning("Aviso", "Ingresa la clave del grupo")
+            messagebox.showwarning("Aviso", "Ingresa la clave del alumno")
             return
 
-        res = buscar_en_bd(termino)
+        res = buscar_alumno_bd(termino)
 
         if res:
             self.ent_clave.config(state="normal")
             self.ent_clave.delete(0, tk.END)
-            self.ent_clave.insert(0, res.get("cveGru", ""))
+            self.ent_clave.insert(0, res.get("cveAlu", ""))
             self.ent_clave.config(state="readonly")
 
             self.ent_nombre.delete(0, tk.END)
-            self.ent_nombre.insert(0, res.get("nomGru", ""))
+            self.ent_nombre.insert(0, res.get("nomAlu", ""))
         else:
             messagebox.showwarning("Error", "No encontrado")
 
@@ -150,7 +150,7 @@ class VentanaAlumno:
             messagebox.showwarning("Aviso", "Datos incompletos")
             return
 
-        if actualizar_en_bd(cve, nom):
+        if actualizar_alumno_bd(cve, nom):
             messagebox.showinfo("Éxito", "Actualizado correctamente")
         else:
             messagebox.showerror("Error", "No se pudo actualizar")
@@ -160,6 +160,6 @@ class VentanaAlumno:
         self.ent_clave.delete(0, tk.END)
         self.ent_nombre.delete(0, tk.END)
 
-    def eliminar_todos(self):
-        if messagebox.askyesno("Confirmación", "¿Eliminar todos los grupos?"):
-            eliminar_todos_grupos()
+    def eliminar_todos_alumnos(self):
+        if messagebox.askyesno("Confirmación", "¿Eliminar todos los alumnos?"):
+            eliminar_todos_alumnos()
