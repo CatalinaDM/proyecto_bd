@@ -92,13 +92,33 @@ class VentanaGrupo:
         card_formatos.pack(fill="x", pady=10)
 
         formatos = ["csv", "json", "xml"]
-        funciones_exportar = {"csv": exportar_csv, "json": exportar_json, "xml": exportar_xml}
-        funciones_importar = {"csv": importar_csv, "json": importar_json, "xml": importar_xml}
+
+        conf_gru = {
+            "col": "Grupo",
+            "csv_f": "cveGru,nomGru",
+            "file": "grupos_export",
+            "xml_r": "Grupos",
+            "xml_h": "Grupo",
+            "xml_m": {"cveGru": "Clave", "nomGru": "Nombre"}
+        }
+
+        funciones_importar = {
+            "csv": importar_csv, 
+            "json": importar_json, 
+            "xml": importar_xml
+        }
 
         for i, fmt in enumerate(formatos):
+            if fmt == "csv":
+                cmd_exp = lambda: exportar_csv(conf_gru["col"], conf_gru["csv_f"], conf_gru["file"])
+            elif fmt == "json":
+                cmd_exp = lambda: exportar_json(conf_gru["col"], conf_gru["file"])
+            else: 
+                cmd_exp = lambda: exportar_xml(conf_gru["col"], conf_gru["xml_r"], conf_gru["xml_h"], conf_gru["xml_m"], conf_gru["file"])
+
             tk.Button(card_formatos, text=f"Exportar {fmt.upper()}",
                       bg="#11698E", fg="white", relief="flat",
-                      width=15, command=funciones_exportar[fmt]).grid(row=0, column=i, padx=5, pady=5)
+                      width=15, command=cmd_exp).grid(row=0, column=i, padx=5, pady=5)
 
             tk.Button(card_formatos, text=f"Importar {fmt.upper()}",
                       bg="#16C79A", fg="white", relief="flat",
@@ -108,17 +128,9 @@ class VentanaGrupo:
         card_global = tk.Frame(container, bg="#F8F1F1")
         card_global.pack(fill="x", pady=10)
 
-        tk.Button(card_global, text="Ejecutar Backup",
-                  bg="#11698E", fg="white", relief="flat",
-                  width=50, command=realizar_backup).pack(pady=4)
-
         tk.Button(card_global, text="Eliminar todos los grupos",
                   bg="#c0392b", fg="white", relief="flat",
                   width=50, command=self.eliminar_todos).pack(pady=4)
-
-        tk.Button(card_global, text="Restaurar grupos",
-                  bg="#16C79A", fg="white", relief="flat",
-                  width=50, command=restaurar_backup).pack(pady=4)
 
     # ====== LÓGICA (IGUAL) ======
 

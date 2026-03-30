@@ -92,33 +92,48 @@ class VentanaAlumno:
         card_formatos.pack(fill="x", pady=10)
 
         formatos = ["csv", "json", "xml"]
-        funciones_exportar = {"csv": exportar_csv, "json": exportar_json, "xml": exportar_xml}
-        funciones_importar = {"csv": importar_csv_alumno, "json": importar_json_alumno, "xml": importar_xml_alumno}
+        # Configuración específica para Alumnos
+        conf_alu = {
+            "col": "Alumno",
+            "csv_f": "cveAlu,nomAlu",
+            "file": "alumnos_export",
+            "xml_r": "Alumnos",
+            "xml_h": "Alumno",
+            "xml_m": {"cveAlu": "Clave", "nomAlu": "Nombre"}
+        }
+
+        # Funciones de importar (estas parecen seguir siendo individuales por ahora)
+        funciones_importar = {
+            "csv": importar_csv_alumno, 
+            "json": importar_json_alumno, 
+            "xml": importar_xml_alumno
+        }
 
         for i, fmt in enumerate(formatos):
-            tk.Button(card_formatos, text=f"Exportar {fmt.upper()}",
-                      bg="#11698E", fg="white", relief="flat",
-                      width=15, command=funciones_exportar[fmt]).grid(row=0, column=i, padx=5, pady=5)
+        # --- BOTONES DE EXPORTAR ---
+            if fmt == "csv":
+                cmd_exp = lambda: exportar_csv(conf_alu["col"], conf_alu["csv_f"], conf_alu["file"])
+            elif fmt == "json":
+                cmd_exp = lambda: exportar_json(conf_alu["col"], conf_alu["file"])
+            else:
+                cmd_exp = lambda: exportar_xml(conf_alu["col"], conf_alu["xml_r"], conf_alu["xml_h"], conf_alu["xml_m"], "alumnos_export")
 
+            tk.Button(card_formatos, text=f"Exportar {fmt.upper()}",
+              bg="#11698E", fg="white", relief="flat",
+              width=15, command=cmd_exp).grid(row=0, column=i, padx=5, pady=5)
+
+            # --- BOTONES DE IMPORTAR ---
             tk.Button(card_formatos, text=f"Importar {fmt.upper()}",
-                      bg="#16C79A", fg="white", relief="flat",
-                      width=15, command=funciones_importar[fmt]).grid(row=1, column=i, padx=5, pady=5)
+              bg="#16C79A", fg="white", relief="flat",
+              width=15, command=funciones_importar[fmt]).grid(row=1, column=i, padx=5, pady=5)
 
         # ====== GLOBALES ======
         card_global = tk.Frame(container, bg="#F8F1F1")
         card_global.pack(fill="x", pady=10)
 
-        tk.Button(card_global, text="Ejecutar Backup",
-                  bg="#11698E", fg="white", relief="flat",
-                  width=50, command=realizar_backup).pack(pady=4)
-
         tk.Button(card_global, text="Eliminar todos los alumnos",
                   bg="#c0392b", fg="white", relief="flat",
                   width=50, command=self.eliminar_todos_alumnos).pack(pady=4)
-
-        tk.Button(card_global, text="Restaurar alumnos",
-                  bg="#16C79A", fg="white", relief="flat",
-                  width=50, command=restaurar_backup).pack(pady=4)
 
     # ====== LÓGICA (IGUAL) ======
 
