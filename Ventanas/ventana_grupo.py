@@ -4,9 +4,6 @@ from tkinter import ttk, messagebox
 from utils.exportar import exportar_csv, exportar_json, exportar_xml
 from utils.importar import importar_csv, importar_json, importar_xml
 
-from Backup.backup import realizar_backup
-from Backup.restore import restaurar_backup
-
 from Grupo.editar_grupo import actualizar_en_bd 
 from Grupo.eliminar_grupo import eliminar_grupo, eliminar_todos_grupos
 from Grupo.agregar_grupo import agregar_grupo

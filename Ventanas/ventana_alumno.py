@@ -4,9 +4,6 @@ from tkinter import ttk, messagebox
 from utils.exportar import exportar_csv, exportar_json, exportar_xml
 from utils.importar_alumno import importar_csv_alumno, importar_json_alumno, importar_xml_alumno
 
-from Backup.backup import realizar_backup
-from Backup.restore import restaurar_backup
-
 from Alumno.editar_alumno import actualizar_alumno_bd
 from Alumno.eliminar_alumno import eliminar_alumno, eliminar_todos_alumnos
 from Alumno.agregar_alumno import agregar_alumno
@@ -57,9 +54,19 @@ class VentanaAlumno:
         self.ent_nombre = tk.Entry(card_datos, width=30, relief="flat", bg="white")
         self.ent_nombre.grid(row=1, column=1, padx=10, pady=10)
 
+        # Campo: Edad
+        tk.Label(card_datos, text="Edad:", bg="#F8F1F1").grid(row=3, column=0, padx=5, pady=5, sticky="e")
+        self.ent_edad = tk.Entry(card_datos, width=25, relief="flat", bg="white")
+        self.ent_edad.grid(row=3, column=1, padx=5, pady=5)
+
+        # Campo: Clave Grupo
+        tk.Label(card_datos, text="Cve Grupo:", bg="#F8F1F1").grid(row=4, column=0, padx=5, pady=5, sticky="e")
+        self.ent_grupo = tk.Entry(card_datos, width=25, relief="flat", bg="white")
+        self.ent_grupo.grid(row=4, column=1, padx=5, pady=5)
+
         # BOTONES LATERALES
         side_btns = tk.Frame(card_datos, bg="#F8F1F1")
-        side_btns.grid(row=0, column=2, rowspan=2, padx=10)
+        side_btns.grid(row=0, column=2, rowspan=5, padx=10)
 
         tk.Button(side_btns, text="Buscar", bg="#11698E", fg="white",
                   relief="flat", width=12, command=self.click_buscar).pack(pady=3)
@@ -75,17 +82,17 @@ class VentanaAlumno:
         acciones = tk.Frame(container, bg="#F8F1F1")
         acciones.pack(fill="x", pady=10)
 
-        tk.Button(acciones, text="Agregar",
-                  bg="#16C79A", fg="white", relief="flat",
-                  width=20,
-                  command=lambda: agregar_alumno(self.ent_clave.get(), self.ent_nombre.get(), self)
+        tk.Button(acciones, text="Agregar", bg="#16C79A", fg="white", relief="flat", width=20,
+                  command=lambda: agregar_alumno(
+                      self.ent_clave.get(), 
+                      self.ent_nombre.get(),
+                      self.ent_edad.get(),
+                      self.ent_grupo.get(),
+                      self)
                   ).pack(side="left", padx=5)
 
-        tk.Button(acciones, text="Modificar",
-                  bg="#11698E", fg="white", relief="flat",
-                  width=20,
-                  command=self.click_modificar
-                  ).pack(side="left", padx=5)
+        tk.Button(acciones, text="Modificar", bg="#11698E", fg="white", relief="flat", width=20,
+                  command=self.click_modificar).pack(side="left", padx=5)
 
         # ====== IMPORTAR / EXPORTAR ======
         card_formatos = tk.Frame(container, bg="#F8F1F1")
@@ -95,11 +102,16 @@ class VentanaAlumno:
         # Configuración específica para Alumnos
         conf_alu = {
             "col": "Alumno",
-            "csv_f": "cveAlu,nomAlu",
+            "csv_f": "cveAlu,nomAlu,edaAlu,cveGru", # Agregamos los nuevos campos
             "file": "alumnos_export",
             "xml_r": "Alumnos",
             "xml_h": "Alumno",
-            "xml_m": {"cveAlu": "Clave", "nomAlu": "Nombre"}
+            "xml_m": {
+                "cveAlu": "Clave", 
+                "nomAlu": "Nombre",
+                "edaAlu": "Edad",
+                "cveGru": "Grupo"
+            }
         }
 
         # Funciones de importar (estas parecen seguir siendo individuales por ahora)
@@ -139,13 +151,11 @@ class VentanaAlumno:
 
     def click_buscar(self):
         termino = self.ent_clave.get().strip()
-
         if not termino:
             messagebox.showwarning("Aviso", "Ingresa la clave del alumno")
             return
 
         res = buscar_alumno_bd(termino)
-
         if res:
             self.ent_clave.config(state="normal")
             self.ent_clave.delete(0, tk.END)
@@ -154,18 +164,28 @@ class VentanaAlumno:
 
             self.ent_nombre.delete(0, tk.END)
             self.ent_nombre.insert(0, res.get("nomAlu", ""))
+            
+            self.ent_edad.delete(0, tk.END)
+            self.ent_edad.insert(0, res.get("edaAlu", ""))
+            
+            self.ent_grupo.delete(0, tk.END)
+            self.ent_grupo.insert(0, res.get("cveGru", ""))
         else:
             messagebox.showwarning("Error", "No encontrado")
 
     def click_modificar(self):
+        # Capturamos todos los campos para enviar a la BD
         cve = self.ent_clave.get().strip()
         nom = self.ent_nombre.get().strip()
+        eda = self.ent_edad.get().strip()
+        gru = self.ent_grupo.get().strip()
 
         if not cve or not nom:
             messagebox.showwarning("Aviso", "Datos incompletos")
             return
 
-        if actualizar_alumno_bd(cve, nom):
+        # Aquí debes actualizar tu función actualizar_alumno_bd para recibir estos campos
+        if actualizar_alumno_bd(cve, nom, eda, gru):
             messagebox.showinfo("Éxito", "Actualizado correctamente")
         else:
             messagebox.showerror("Error", "No se pudo actualizar")
@@ -174,7 +194,14 @@ class VentanaAlumno:
         self.ent_clave.config(state="normal")
         self.ent_clave.delete(0, tk.END)
         self.ent_nombre.delete(0, tk.END)
+        self.ent_edad.delete(0, tk.END)
+        self.ent_grupo.delete(0, tk.END)
 
     def eliminar_todos_alumnos(self):
-        if messagebox.askyesno("Confirmación", "¿Eliminar todos los alumnos?"):
-            eliminar_todos_alumnos()
+        """Muestra confirmación y llama a la lógica para vaciar la colección."""
+        if messagebox.askyesno("Confirmación", "¿Estás seguro de que deseas eliminar TODOS los alumnos?\nEsta acción no se puede deshacer."):
+            if eliminar_todos_alumnos(): # Aquí llama a la función que importaste de Alumno.eliminar_alumno
+                messagebox.showinfo("Éxito", "Se han eliminado todos los registros de alumnos.")
+                self.limpiar_campos()
+            else:
+                messagebox.showerror("Error", "No se pudo completar la operación.")
